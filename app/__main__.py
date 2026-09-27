@@ -1,0 +1,33 @@
+import asyncio
+import json
+import warnings
+
+import config
+import typer
+from pydantic import PydanticDeprecatedSince20
+from rich.console import Console
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
+warnings.filterwarnings("ignore", module="pydantic")
+
+app = typer.Typer(
+    name="recommender",
+    help="ep recommender service cli",
+    pretty_exceptions_show_locals=False,
+)
+console = Console()
+
+CONFIG = config.get_environment_config()
+
+
+@app.command("dummy")
+def dummy(
+    arg: int = typer.Argument(help="The ID of the user to get recommendations for"),
+    opt: int = typer.Option(5, help="Number of recommendations to return"),
+) -> None:
+    """Get recommendations for a user using the specified algorithm and parameters."""
+
+    console.print("HELLO")
+    console.print(f"arg: {arg}, opt: {opt}")
+    console.print(CONFIG)

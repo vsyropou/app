@@ -1,0 +1,48 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+
+# local conf / secrets
+.env
+
+# jupyter 
+notebooks/
+.ipynb_checkpoints/
+
+# editor
+.vscode/
+.cursor/
+.cursorignore
+
+# caches
+.ruff_cache
+.mypy_cache
+
+# tests
+htmlcov/
+.tox/
+.nox/
+coverage/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.pytest_cache/
+cover/
+
+# runtime data
+data/*
+
+
+.idea

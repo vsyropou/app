@@ -1,0 +1,58 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+
+    "filters": {
+        "correlation_id": {
+            "()": "asgi_correlation_id.CorrelationIdFilter",
+            "default_value": "-"
+        }
+    },
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s - %(name)s - %(correlation_id)s - %(levelname)s - %(message)s",
+            "class": "logging.Formatter"
+        },
+         "web": {
+            "format": "%(asctime)s - %(name)s - %(correlation_id)s - %(levelname)s - %(message)s",
+            "class": "logging.Formatter"
+        }
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+            "filters": ["correlation_id"]
+
+        },
+        "web": {
+            "class": "logging.StreamHandler",
+            "formatter": "web",
+            "stream": "ext://sys.stdout",
+            "filters": ["correlation_id"]
+        }
+    },
+    "loggers": {
+        "root": {
+            "level": "INFO",
+            "handlers": [
+                "console"
+            ]
+        },
+        "ep_recommender": {
+            "propagate": 0,
+            "level": "INFO",
+            "handlers": [
+                "web"
+            ]
+        },
+        "uvicorn": {
+            "propagate": 0,
+            "level": "INFO",
+            "handlers": [
+                "web"
+            ]
+        }
+    }
+}
