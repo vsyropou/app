@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, MetaData, Table
 
 import app.db
+import app.models  # noqa: F401  (imported for module-level Table registration)
 from app.config import get_environment_config
 from app.db import Database
 
