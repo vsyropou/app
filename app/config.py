@@ -41,7 +41,7 @@ class MlflowConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
     enabled: bool = True
-    tracking_uri: str = "http://localhost:5000"
+    tracking_uri: str = "http://localhost:5500"
     experiment_name: str = "app"
 
 
