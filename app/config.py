@@ -1,7 +1,9 @@
+import enum
 import os
 import pathlib
 from typing import Literal
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PWD = pathlib.Path(__file__).parent
@@ -19,6 +21,32 @@ class OtelConfig(BaseSettings):
     enabled: bool = False
     endpoint: str | None = None
     sample_rate: float = 1.0
+
+
+class SSLMode(enum.StrEnum):
+    DISABLE = "disable"
+    ALLOW = "allow"
+    PREFER = "prefer"
+    REQUIRE = "require"
+    VERIFY_CA = "verify-ca"
+    VERIFY_FULL = "verify-full"
+
+
+class DatabaseConfig(BaseSettings):
+    username: str = "app"
+    password: str = "password"
+    host: str = "localhost"
+    port: int = 5432
+    database: str = "app"
+    schema_name: str = Field(alias="schema", default="public")
+    ssl_mode: SSLMode = Field(alias="sslmode", default=SSLMode.PREFER)
+    pool_pre_ping: bool = True
+    pool_size: int = 5
+    pool_recycle: int = -1
+    scheme: str = "postgresql+psycopg"
+
+    def connection_url(self) -> str:
+        return f"{self.scheme}://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
 
 class AppConfig(BaseSettings):
@@ -72,6 +100,9 @@ class AppConfig(BaseSettings):
 
     # OpenTelemetry
     otel: OtelConfig = OtelConfig()
+
+    # Database
+    database: DatabaseConfig = DatabaseConfig()
 
     # Slow response threshold (in seconds)
     slow_response_threshold: int = 3

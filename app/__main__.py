@@ -5,6 +5,7 @@ from pydantic import PydanticDeprecatedSince20
 from rich.console import Console
 
 from app import config
+from app.cli import db as db_cli
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
@@ -15,6 +16,7 @@ app = typer.Typer(
     help="ep recommender service cli",
     pretty_exceptions_show_locals=False,
 )
+app.add_typer(db_cli.app, name="db")
 console = Console()
 
 CONFIG = config.get_environment_config()
