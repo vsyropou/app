@@ -1,7 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from logging import getLogger
-from typing import Any
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, status
@@ -11,6 +10,7 @@ from starlette.responses import JSONResponse, RedirectResponse
 from app import __version__
 from app.api.middlewares.events import KafkaMiddleware, LazyProducer
 from app.api.middlewares.metrics import PrometheusMiddleware, metrics
+from app.checks import router as checks_router
 from app.component import router as component_router
 from app.config import AppConfig
 
@@ -21,7 +21,7 @@ def app_factory(config: AppConfig, producer: LazyProducer) -> FastAPI:
     logger.info("Starting FastAPI setup")
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator:  # noqa: ARG001
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
         # kafka audit log producer
         await producer.init_producer()
 
@@ -44,6 +44,9 @@ def app_factory(config: AppConfig, producer: LazyProducer) -> FastAPI:
     # Composable endpoints
     myapp.include_router(component_router.router, prefix="/api/v1")
 
+    # Liveness/readiness probes (root-mounted so k8s probes can hit them directly)
+    myapp.include_router(checks_router.build_router(producer))
+
     # ======================= #
     # Extra Endpoints
     # ======================= #
@@ -56,11 +59,6 @@ def app_factory(config: AppConfig, producer: LazyProducer) -> FastAPI:
         @myapp.get("/", status_code=200)
         async def docs_redirect() -> RedirectResponse:
             return RedirectResponse(url="/redoc")
-
-    @myapp.get("/healthz", status_code=200)
-    async def health_check() -> dict[str, Any]:
-        logger.info("Health check")
-        return {"api_version": __version__}
 
     # Middlewares
     if config.audit_log_enabled:
