@@ -14,6 +14,8 @@ class SentryConfig(BaseSettings):
 
 
 class OtelConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
     enabled: bool = False
     endpoint: str | None = None
     sample_rate: float = 1.0
@@ -41,6 +43,9 @@ class AppConfig(BaseSettings):
 
     # Audit log
     audit_log_enabled: bool = True
+
+    # Security
+    api_token: str | None = None
 
     # Kafka config
     # Topics follow conventions in https://hackthebox.atlassian.net/wiki/spaces/ACH/pages/436535297/Kafka+Topics+Naming+Conventions

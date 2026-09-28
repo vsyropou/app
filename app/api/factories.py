@@ -3,12 +3,13 @@ from contextlib import asynccontextmanager
 from logging import getLogger
 
 from asgi_correlation_id import CorrelationIdMiddleware
-from fastapi import FastAPI, status
+from fastapi import Depends, FastAPI, status
 from opentelemetry.sdk.trace import TracerProvider
 from starlette.requests import Request
 from starlette.responses import JSONResponse, RedirectResponse
 
 from app import __version__
+from app.api.dependencies import require_bearer
 from app.api.middlewares.events import KafkaMiddleware, LazyProducer
 from app.api.middlewares.metrics import PrometheusMiddleware, metrics
 from app.checks import router as checks_router
@@ -46,7 +47,11 @@ def app_factory(config: AppConfig, producer: LazyProducer, tracer_provider: Trac
     )
 
     # Composable endpoints
-    myapp.include_router(component_router.router, prefix="/api/v1")
+    myapp.include_router(
+        component_router.router,
+        prefix="/api/v1",
+        dependencies=[Depends(require_bearer)],
+    )
 
     # Liveness/readiness probes (root-mounted so k8s probes can hit them directly)
     myapp.include_router(checks_router.build_router(producer))
