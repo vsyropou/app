@@ -46,3 +46,7 @@ data/*
 
 
 .idea
+
+# harness
+CLAUDE.md
+AGENTS.md
