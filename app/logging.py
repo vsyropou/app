@@ -9,7 +9,7 @@ import pythonjsonlogger
 PWD = pathlib.Path(__file__).parent
 
 
-class UvicornJSONAccessFormatter(pythonjsonlogger.json.JsonFormatter):
+class HypercornJSONAccessFormatter(pythonjsonlogger.json.JsonFormatter):
     def format(self, record: logging.LogRecord) -> str:
         recordcopy = copy(record)
         client_addr, method, full_path, http_version, status_code = recordcopy.args  # type: ignore[misc]
@@ -25,7 +25,7 @@ class UvicornJSONAccessFormatter(pythonjsonlogger.json.JsonFormatter):
         return super().format(record=recordcopy)
 
 
-class UvicornJSONDefaultFormatter(pythonjsonlogger.json.JsonFormatter):
+class HypercornJSONDefaultFormatter(pythonjsonlogger.json.JsonFormatter):
     def format(self, record: logging.LogRecord) -> str:
         recordcopy = copy(record)
         recordcopy.__dict__.pop("color_message", None)
@@ -35,7 +35,7 @@ class UvicornJSONDefaultFormatter(pythonjsonlogger.json.JsonFormatter):
 def initialize_logging(
     log_conf_file: Literal["logging.json", "logging.prod.json"],
 ) -> dict[str, Any]:
-    with open(PWD / "logging" / log_conf_file) as fp:
+    with open(PWD / "conf" / log_conf_file) as fp:
         config: dict[str, Any] = json.load(fp)
         logging.config.dictConfig(config)
         return config

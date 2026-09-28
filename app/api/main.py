@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 import sentry_sdk
 from aiokafka.helpers import create_ssl_context
@@ -66,5 +65,6 @@ if __name__ == "__main__":
     # Run using main - useful for attaching debuggers
     cnf = HypercornConfig()
     cnf.bind = ["0.0.0.0:3000"]
+    cnf.accesslog = "-"
     cnf.log_config_dict = log_config
     asyncio.run(serve(app, cnf))

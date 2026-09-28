@@ -9,34 +9,26 @@
         }
     },
     "formatters": {
-        "web": {
+        "simple": {
             "format": "%(asctime)s - %(name)s - %(correlation_id)s - %(levelname)s - %(message)s",
-            "class": "pythonjsonlogger.jsonlogger.JsonFormatter"
+            "class": "logging.Formatter"
         },
-        "uv_default": {
-            "class": "ep_recommender.logging.UvicornJSONDefaultFormatter"
-        },
-        "uv_access": {
-            "class": "ep_recommender.logging.UvicornJSONAccessFormatter"
+         "web": {
+            "format": "%(asctime)s - %(name)s - %(correlation_id)s - %(levelname)s - %(message)s",
+            "class": "logging.Formatter"
         }
     },
     "handlers": {
-        "web": {
+        "console": {
             "class": "logging.StreamHandler",
-            "formatter": "web",
+            "formatter": "simple",
             "stream": "ext://sys.stdout",
-            "filters": ["correlation_id"]
-        },
-        "uv_default": {
-            "formatter": "uv_default",
-            "class": "logging.StreamHandler",
-            "stream": "ext://sys.stderr",
             "filters": ["correlation_id"]
 
         },
-        "uv_access": {
-            "formatter": "uv_access",
+        "web": {
             "class": "logging.StreamHandler",
+            "formatter": "web",
             "stream": "ext://sys.stdout",
             "filters": ["correlation_id"]
         }
@@ -45,18 +37,22 @@
         "root": {
             "level": "INFO",
             "handlers": [
-                "web"
+                "console"
             ]
         },
-        "ep_recommender": {
+        "app": {
             "propagate": 0,
             "level": "INFO",
             "handlers": [
                 "web"
             ]
         },
-        "uvicorn": {"handlers": ["uv_default"], "level": "INFO", "propagate": 0},
-        "uvicorn.error":  {"handlers": ["uv_default"], "level": "INFO", "propagate": 0},
-        "uvicorn.access": {"handlers": ["uv_access"], "level": "INFO", "propagate": 0}
+        "hypercorn": {
+            "propagate": 0,
+            "level": "INFO",
+            "handlers": [
+                "web"
+            ]
+        }
     }
 }

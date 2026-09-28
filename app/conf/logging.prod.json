@@ -9,26 +9,34 @@
         }
     },
     "formatters": {
-        "simple": {
+        "web": {
             "format": "%(asctime)s - %(name)s - %(correlation_id)s - %(levelname)s - %(message)s",
-            "class": "logging.Formatter"
+            "class": "pythonjsonlogger.jsonlogger.JsonFormatter"
         },
-         "web": {
-            "format": "%(asctime)s - %(name)s - %(correlation_id)s - %(levelname)s - %(message)s",
-            "class": "logging.Formatter"
+        "default": {
+            "class": "app.logging.HypercornJSONDefaultFormatter"
+        },
+        "access": {
+            "class": "app.logging.HypercornJSONAccessFormatter"
         }
     },
     "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-            "stream": "ext://sys.stdout",
-            "filters": ["correlation_id"]
-
-        },
         "web": {
             "class": "logging.StreamHandler",
             "formatter": "web",
+            "stream": "ext://sys.stdout",
+            "filters": ["correlation_id"]
+        },
+        "default": {
+            "formatter": "default",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+            "filters": ["correlation_id"]
+
+        },
+        "access": {
+            "formatter": "access",
+            "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
             "filters": ["correlation_id"]
         }
@@ -37,22 +45,18 @@
         "root": {
             "level": "INFO",
             "handlers": [
-                "console"
+                "web"
             ]
         },
-        "ep_recommender": {
+        "app": {
             "propagate": 0,
             "level": "INFO",
             "handlers": [
                 "web"
             ]
         },
-        "uvicorn": {
-            "propagate": 0,
-            "level": "INFO",
-            "handlers": [
-                "web"
-            ]
-        }
+        "hypercorn": {"handlers": ["default"], "level": "INFO", "propagate": 0},
+        "hypercorn.error":  {"handlers": ["default"], "level": "INFO", "propagate": 0},
+        "hypercorn.access": {"handlers": ["access"], "level": "INFO", "propagate": 0}
     }
 }
