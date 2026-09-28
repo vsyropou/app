@@ -23,6 +23,28 @@ class OtelConfig(BaseSettings):
     sample_rate: float = 1.0
 
 
+class QdrantConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
+    enabled: bool = True
+    host: str = "localhost"
+    port: int = 6333
+    grpc_port: int = 6334
+    api_key: str | None = None
+    prefer_grpc: bool = False
+    collection_name: str = "rag_documents"
+    vector_size: int = 1536
+    distance: Literal["Cosine", "Dot", "Euclid"] = "Cosine"
+
+
+class MlflowConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
+    enabled: bool = True
+    tracking_uri: str = "http://localhost:5000"
+    experiment_name: str = "app"
+
+
 class SSLMode(enum.StrEnum):
     DISABLE = "disable"
     ALLOW = "allow"
@@ -101,8 +123,14 @@ class AppConfig(BaseSettings):
     # OpenTelemetry
     otel: OtelConfig = OtelConfig()
 
+    # Qdrant
+    qdrant: QdrantConfig = QdrantConfig()
+
     # Database
     database: DatabaseConfig = DatabaseConfig()
+
+    # MLflow
+    mlflow: MlflowConfig = MlflowConfig()
 
     # Slow response threshold (in seconds)
     slow_response_threshold: int = 3
