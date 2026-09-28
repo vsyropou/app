@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -43,3 +44,14 @@ async def test_client(test_app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
         base_url="http://test",
     ) as client:
         yield client
+
+
+def make_otel_config(**overrides: Any) -> AppConfig:
+    """Build an AppConfig with OTel defaults tuned for tracing tests; any field can be overridden."""
+    cfg = get_environment_config("test")
+    cfg.api_token = None
+    cfg.audit_log_enabled = False
+    cfg.otel.enabled = overrides.get("enabled", True)
+    cfg.otel.endpoint = overrides.get("endpoint", "http://localhost:4318")
+    cfg.otel.sample_rate = overrides.get("sample_rate", 1.0)
+    return cfg
