@@ -13,6 +13,7 @@ from app.api.dependencies import get_config
 from app.api.factories import app_factory
 from app.api.middlewares.events import LazyProducer
 from app.logging import initialize_logging
+from app.tracing import initialize_tracing
 
 config = get_config()
 
@@ -49,7 +50,9 @@ sasl_config = (
 producer = LazyProducer(bootstrap_servers=config.core_mq_kafka_brokers, api_version="2.8", **sasl_config)
 
 
-app = app_factory(config, producer)
+tracer_provider = initialize_tracing(config, __version__)
+
+app = app_factory(config, producer, tracer_provider)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -66,5 +69,5 @@ if __name__ == "__main__":
     cnf = HypercornConfig()
     cnf.bind = ["0.0.0.0:3000"]
     cnf.accesslog = "-"
-    cnf.log_config_dict = log_config
-    asyncio.run(serve(app, cnf))
+    cnf.logconfig_dict = log_config
+    asyncio.run(serve(app, cnf))  # type: ignore[arg-type]

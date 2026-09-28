@@ -10,11 +10,14 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     restart: always
     env_file:
       - ../.env
     environment:
       - CORE_MQ_KAFKA_BROKERS=kafka:29092
+      - OTEL_ENDPOINT=http://otel-collector:4318/v1/traces
     # Mount source for hot reload in container
     volumes:
       - ../app:/app/app
@@ -66,6 +69,65 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+
+  postgres:
+    image: postgres:18
+    container_name: app-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app
+    volumes:
+      - pg_data:/var/lib/postgresql
+    networks:
+      - app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- tracing / metrics demo stack ----
+  otel-collector:
+    image: otel/opentelemetry-collector:0.105.0
+    container_name: app-otel-collector
+    command: ["--config=/etc/otel-collector.yml"]
+    volumes:
+      - ./otel-collector.yml:/etc/otel-collector.yml
+    ports:
+      - "4318:4318"   # OTLP http
+      - "4317:4317"   # OTLP grpc
+    networks:
+      - app
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/jaeger:2.21.0
+    container_name: app-jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+    networks:
+      - app
+
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: app-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - app
+
+volumes:
+  pg_data:
 
 networks:
   app:

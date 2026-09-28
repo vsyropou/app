@@ -11,7 +11,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Match
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Scope
 
 INFO = Gauge("fastapi_app_info", "FastAPI application information.", ["app_name"])
 REQUESTS = Counter(
@@ -109,7 +109,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         return request.url.path, False
 
     @staticmethod
-    def _path_from_routes(scope) -> tuple[str, bool]:  # noqa: ANN001
+    def _path_from_routes(scope: Scope) -> tuple[str, bool]:
         candidates: list[tuple[int, str]] = []
         for route in scope["app"].routes:
             match, _ = route.matches(scope)
@@ -124,7 +124,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             prefix = getattr(getattr(route, "include_context", None), "prefix", "")
             if original_router is None or not prefix.startswith("/"):
                 continue
-            stripped_scope = {**scope, "path": scope["path"][len(prefix):]}
+            stripped_scope = {**scope, "path": scope["path"][len(prefix) :]}
             for inner in original_router.routes:
                 inner_match, _ = inner.matches(stripped_scope)
                 if inner_match != Match.FULL:

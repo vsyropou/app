@@ -13,6 +13,12 @@ class SentryConfig(BaseSettings):
     profile_lifecycle: Literal["manual", "trace"] = "manual"
 
 
+class OtelConfig(BaseSettings):
+    enabled: bool = False
+    endpoint: str | None = None
+    sample_rate: float = 1.0
+
+
 class AppConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=PWD / ".." / ".env",
@@ -58,6 +64,9 @@ class AppConfig(BaseSettings):
 
     # Sentry
     sentry: SentryConfig = SentryConfig()
+
+    # OpenTelemetry
+    otel: OtelConfig = OtelConfig()
 
     # Slow response threshold (in seconds)
     slow_response_threshold: int = 3

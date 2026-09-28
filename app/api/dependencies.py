@@ -3,6 +3,7 @@ from logging import getLogger
 
 from app.component.methods import get_method
 from app.config import AppConfig, get_environment_config
+from app.interfaces import IDependency
 
 log = getLogger(__name__)
 PWD = pathlib.Path(__file__).parent
@@ -13,5 +14,5 @@ def get_config() -> AppConfig:
 
 
 # Placeholder, eg model
-def get_component():  # -> IDependency:
+def get_component() -> IDependency:
     return get_method()

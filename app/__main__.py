@@ -1,11 +1,10 @@
-import asyncio
-import json
 import warnings
 
-import config
 import typer
 from pydantic import PydanticDeprecatedSince20
 from rich.console import Console
+
+from app import config
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)

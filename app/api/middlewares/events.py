@@ -157,7 +157,7 @@ class KafkaMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Use request ID to correlate request and response. Generate a random one if not found.
-        request_id = correlation_id.get() or uuid.uuid7()
+        request_id = correlation_id.get() or str(uuid.uuid4())
         logger.info(f"Logging request {request_id}")
 
         # Capture request details

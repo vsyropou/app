@@ -4,6 +4,7 @@ from logging import getLogger
 
 from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, status
+from opentelemetry.sdk.trace import TracerProvider
 from starlette.requests import Request
 from starlette.responses import JSONResponse, RedirectResponse
 
@@ -13,11 +14,12 @@ from app.api.middlewares.metrics import PrometheusMiddleware, metrics
 from app.checks import router as checks_router
 from app.component import router as component_router
 from app.config import AppConfig
+from app.tracing import instrument_fastapi
 
 logger = getLogger(__name__)
 
 
-def app_factory(config: AppConfig, producer: LazyProducer) -> FastAPI:
+def app_factory(config: AppConfig, producer: LazyProducer, tracer_provider: TracerProvider | None = None) -> FastAPI:
     logger.info("Starting FastAPI setup")
 
     @asynccontextmanager
@@ -28,6 +30,8 @@ def app_factory(config: AppConfig, producer: LazyProducer) -> FastAPI:
         yield
 
         await producer.stop()
+        if tracer_provider is not None:
+            tracer_provider.shutdown()
 
     myapp = FastAPI(
         title=config.app_name,
@@ -61,6 +65,12 @@ def app_factory(config: AppConfig, producer: LazyProducer) -> FastAPI:
             return RedirectResponse(url="/redoc")
 
     # Middlewares
+    # OTel instrumentation must be installed before any other middleware so the
+    # current request span is active while inner middleware (Prometheus exemplars,
+    # Kafka audit) runs.
+    if tracer_provider is not None:
+        instrument_fastapi(myapp)
+
     if config.audit_log_enabled:
         logger.info("Enabling Kafka Audit logging")
         myapp.add_middleware(
