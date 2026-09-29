@@ -6,6 +6,7 @@ from rich.console import Console
 
 from app import config
 from app.cli import db as db_cli
+from app.cli import model as model_cli
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
@@ -17,6 +18,7 @@ app = typer.Typer(
     pretty_exceptions_show_locals=False,
 )
 app.add_typer(db_cli.app, name="db")
+app.add_typer(model_cli.app, name="model")
 console = Console()
 
 CONFIG = config.get_environment_config()

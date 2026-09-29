@@ -45,6 +45,14 @@ class MlflowConfig(BaseSettings):
     experiment_name: str = "app"
 
 
+class ModelConfig(BaseSettings):
+    model_config = SettingsConfigDict(extra="ignore")
+
+    name: str = "model"
+    # MLflow model URI (e.g. models:/name@alias, models:/name/version) or local path
+    uri: str | None = None
+
+
 class SSLMode(enum.StrEnum):
     DISABLE = "disable"
     ALLOW = "allow"
@@ -131,6 +139,9 @@ class AppConfig(BaseSettings):
 
     # MLflow
     mlflow: MlflowConfig = MlflowConfig()
+
+    # Model
+    model: ModelConfig = ModelConfig()
 
     # Slow response threshold (in seconds)
     slow_response_threshold: int = 3

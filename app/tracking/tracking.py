@@ -21,8 +21,8 @@ def log_metrics(metrics: dict[str, float], step: int | None = None) -> None:
 
 
 def log_model(model: Any, artifact_path: str, registered_model_name: str | None = None) -> ModelInfo | None:
-    result = mlflow.sklearn.log_model(
-        sk_model=model,
+    result = mlflow.pyfunc.log_model(
+        python_model=model,
         artifact_path=artifact_path,
         registered_model_name=registered_model_name,
     )
