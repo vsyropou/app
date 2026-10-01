@@ -32,6 +32,7 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.65b0",
     "opentelemetry-instrumentation-aiokafka>=0.65b0",
     "opentelemetry-instrumentation-logging>=0.65b0",
+    "docker>=7.1.0",
 ]
 
 [project.scripts]
@@ -69,6 +70,10 @@ exclude = [".venv"]
 plugins = "pydantic.mypy"
 disallow_untyped_defs = true
 disable_error_code = "import-untyped"
+
+[[tool.mypy.overrides]]
+module = "docker.*"
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 120

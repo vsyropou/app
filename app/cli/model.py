@@ -1,41 +1,38 @@
-import mlflow
+from pathlib import Path
+
 import typer
 
-from app import config as app_config
-from app.model import methods
-from app.tracking.tracking import init_tracking, log_model, log_params
+from app import container
+from app.config import get_environment_config
 
 app = typer.Typer(name="model", help="Model Operations")
-
-
-@app.command()
-def train(
-    data: str = typer.Argument(help="Path to the training data. Format is model-specific."),
-    params: list[str] = typer.Option([], "--param", "-p", help="Model parameter as key=value. Repeatable."),
-) -> None:
-    """Train the model and log it to MLflow. Training itself is tracking-free; this command composes the two."""
-
-    cfg = app_config.get_environment_config()
-    model_params = dict(p.split("=", 1) for p in params)
-
-    model = methods.PlaceholderModel()
-    model.train(data, model_params)
-
-    if cfg.mlflow.enabled:
-        init_tracking(cfg.mlflow)
-        with mlflow.start_run():
-            log_params(model_params)
-            log_model(model, artifact_path="model", registered_model_name=cfg.model.name)
-    else:
-        typer.echo("MLflow tracking disabled, trained model not logged")
 
 
 @app.command()
 def load() -> None:
     """Load the configured model once, verifying config.model.uri is reachable."""
 
-    cfg = app_config.get_environment_config()
+    cfg = get_environment_config()
     from app.model import dependencies
 
     dependencies.setup_model(cfg.model)
     typer.echo(f"Model loaded: {dependencies.get_model()}")
+
+
+@app.command()
+def train(
+    data: Path = typer.Option(..., "--data", help="data path."),
+    conf: Path = typer.Option(..., "--conf", help="configuration."),
+) -> None:
+    """Run a command in an ephemeral container built from app/model + deps.toml."""
+
+    cnf = get_environment_config()
+    uri = cnf.mlflow.tracking_uri
+    name = cnf.mlflow.experiment_name
+
+    command = [
+        f"uv run python runner.py train --module model --data {data} --conf {conf} --tracking-uri {uri} --experiment-name {name}"
+    ]
+
+    container.run_in_container(command=command, volumes=[])
+    raise typer.Exit(code)

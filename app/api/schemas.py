@@ -24,12 +24,3 @@ class CustomModel(BaseModel):
         default_dict = self.model_dump()
 
         return jsonable_encoder(default_dict)
-
-
-# Placeholder models
-class Request(CustomModel):
-    attribute: Any
-
-
-class Response(CustomModel):
-    code: Any

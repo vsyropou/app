@@ -1,8 +1,8 @@
 from logging import getLogger
 
 from app.config import ModelConfig
-from app.model.interfaces import IModel
-from app.model.methods import get_method
+from app.interfaces import IModel
+from app.model.model import get_method
 
 logger = getLogger(__name__)
 

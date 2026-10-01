@@ -3,13 +3,12 @@ from typing import Any, cast
 import mlflow
 from mlflow.models.model import ModelInfo
 
-from app.config import MlflowConfig
 
+def log_pandas_df(obj: Any, **kwargs) -> Any:
+    """Load the artifact from the given path."""
 
-def init_tracking(cfg: MlflowConfig) -> None:
-    if cfg.enabled and cfg.tracking_uri:
-        mlflow.set_tracking_uri(cfg.tracking_uri)
-        mlflow.set_experiment(cfg.experiment_name)
+    mlflow_data = mlflow.data.from_pandas(obj)
+    mlflow.log_input(mlflow_data, context=kwargs.get("context", None), tags=kwargs.get("tags", None))
 
 
 def log_params(params: dict[str, Any]) -> None:
