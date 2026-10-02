@@ -1,6 +1,9 @@
+name: scoring
 
-name: serving-model
-
+source:
+  type: csv
+  params:
+    file_path: ./data/data.csv
 
 adapter:
   # Extract content field from the file data
@@ -53,7 +56,7 @@ transformers:
         - "confidence": how sure you are of your verdict, 0.0 means not confident at all, 1.0 means very confident.
         - "hint": one brief sentence justifying your verdict. If you cannot verify the statement, set confidence
           below 0.5 and write "I am not confident in my answer." as the hint.
-      user_prompt_template: |
+      user_prompt_template:  |
         Given the following metadata
           spearer_name: {{ metadata.speaker_name }}
           subject: {{ metadata.subjects }}
@@ -85,18 +88,9 @@ transformers:
               - confidence
               - hint
             additionalProperties: false
-  - type: filter-metadata
-    params:
-      metadata:
-        - field: is_true
-          default_value: "Undefined"
-        - field: confidence
-          default_value: "Undefined"
-        - field: hint
-          default_value: "Undefined"
 
 destination:
   type: file
   params:
-    filename: "-"  # Change to "-" for stdout
-    as_json: false
+    filename: ./data/scored.jsonl
+    as_json: true

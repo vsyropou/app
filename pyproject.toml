@@ -35,6 +35,10 @@ dependencies = [
     "sentence-transformers>=6.1.0",
     "openai>=3.23.0",
     "duckdb>=1.5.6",
+    "streamlit>=1.65.0",
+    "pandas>=3.0.6",
+    "matplotlib>=3.11.2",
+    "polars>=1.44.2",
 ]
 
 [project.scripts]
