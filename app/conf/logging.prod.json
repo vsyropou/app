@@ -14,10 +14,10 @@
             "class": "pythonjsonlogger.jsonlogger.JsonFormatter"
         },
         "default": {
-            "class": "app.logging.HypercornJSONDefaultFormatter"
+            "class": "app.log.HypercornJSONDefaultFormatter"
         },
         "access": {
-            "class": "app.logging.HypercornJSONAccessFormatter"
+            "class": "app.log.HypercornJSONAccessFormatter"
         }
     },
     "handlers": {
