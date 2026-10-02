@@ -5,9 +5,7 @@ from logging import getLogger
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.component.methods import get_method
 from app.config import AppConfig, get_environment_config
-from app.interfaces import IDependency
 
 log = getLogger(__name__)
 PWD = pathlib.Path(__file__).parent
@@ -17,11 +15,6 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 
 def get_config() -> AppConfig:
     return get_environment_config()
-
-
-# Placeholder, eg model
-def get_component() -> IDependency:
-    return get_method()
 
 
 async def require_bearer(

@@ -13,8 +13,8 @@ from app.api.dependencies import require_bearer
 from app.api.middlewares.events import KafkaMiddleware, LazyProducer
 from app.api.middlewares.metrics import PrometheusMiddleware, metrics
 from app.checks import router as checks_router
-from app.component import router as component_router
 from app.config import AppConfig
+from app.models import router as models_router
 from app.tracing import instrument_fastapi
 
 logger = getLogger(__name__)
@@ -48,7 +48,7 @@ def app_factory(config: AppConfig, producer: LazyProducer, tracer_provider: Trac
 
     # Composable endpoints
     myapp.include_router(
-        component_router.router,
+        models_router.router,
         prefix="/api/v1",
         dependencies=[Depends(require_bearer)],
     )

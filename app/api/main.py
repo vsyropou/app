@@ -12,7 +12,7 @@ from app import __version__
 from app.api.dependencies import get_config
 from app.api.factories import app_factory
 from app.api.middlewares.events import LazyProducer
-from app.logging import initialize_logging
+from app.log import initialize_logging
 from app.tracing import initialize_tracing
 
 config = get_config()
@@ -48,7 +48,6 @@ sasl_config = (
 )
 
 producer = LazyProducer(bootstrap_servers=config.core_mq_kafka_brokers, api_version="2.8", **sasl_config)
-
 
 tracer_provider = initialize_tracing(config, __version__)
 
