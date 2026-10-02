@@ -43,6 +43,7 @@ cover/
 
 # runtime data
 data/*
+experiments/*
 
 
 .idea
