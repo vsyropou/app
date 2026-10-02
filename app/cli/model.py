@@ -2,7 +2,6 @@ from pathlib import Path
 
 import typer
 
-from app import container
 from app.config import get_environment_config
 
 app = typer.Typer(name="model", help="Model Operations")
@@ -34,5 +33,17 @@ def train(
         f"uv run python runner.py train --module model --data {data} --conf {conf} --tracking-uri {uri} --experiment-name {name}"
     ]
 
-    container.run_in_container(command=command, volumes=[])
-    raise typer.Exit(code)
+
+#  container.run_in_container(command=command, volumes=[])
+
+# # TODO add some tracking e.g.
+# mlflow.set_tracking_uri(tracking_uri)
+# mlflow.set_experiment(experiment_name)
+# with mlflow.start_run() as run:
+#     run_id = run.info.run_id
+
+#     data = mlflow.download_artifact(run_id=run_id, artifact_path=data_path)
+#     params = mlflow.download_artifact(run_id=run_id, artifact_path=params_path)
+
+#     func(data=data, params=params)
+# raise typer.Exit(code)

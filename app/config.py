@@ -1,9 +1,7 @@
-import enum
 import os
 import pathlib
 from typing import Literal
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PWD = pathlib.Path(__file__).parent
@@ -23,20 +21,6 @@ class OtelConfig(BaseSettings):
     sample_rate: float = 1.0
 
 
-class QdrantConfig(BaseSettings):
-    model_config = SettingsConfigDict(extra="ignore")
-
-    enabled: bool = True
-    host: str = "localhost"
-    port: int = 6333
-    grpc_port: int = 6334
-    api_key: str | None = None
-    prefer_grpc: bool = False
-    collection_name: str = "rag_documents"
-    vector_size: int = 1536
-    distance: Literal["Cosine", "Dot", "Euclid"] = "Cosine"
-
-
 class MlflowConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
@@ -51,32 +35,6 @@ class ModelConfig(BaseSettings):
     name: str = "model"
     # MLflow model URI (e.g. models:/name@alias, models:/name/version) or local path
     uri: str | None = None
-
-
-class SSLMode(enum.StrEnum):
-    DISABLE = "disable"
-    ALLOW = "allow"
-    PREFER = "prefer"
-    REQUIRE = "require"
-    VERIFY_CA = "verify-ca"
-    VERIFY_FULL = "verify-full"
-
-
-class DatabaseConfig(BaseSettings):
-    username: str = "app"
-    password: str = "password"
-    host: str = "localhost"
-    port: int = 5432
-    database: str = "app"
-    schema_name: str = Field(alias="schema", default="public")
-    ssl_mode: SSLMode = Field(alias="sslmode", default=SSLMode.PREFER)
-    pool_pre_ping: bool = True
-    pool_size: int = 5
-    pool_recycle: int = -1
-    scheme: str = "postgresql+psycopg"
-
-    def connection_url(self) -> str:
-        return f"{self.scheme}://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
 
 
 class AppConfig(BaseSettings):
@@ -130,12 +88,6 @@ class AppConfig(BaseSettings):
 
     # OpenTelemetry
     otel: OtelConfig = OtelConfig()
-
-    # Qdrant
-    qdrant: QdrantConfig = QdrantConfig()
-
-    # Database
-    database: DatabaseConfig = DatabaseConfig()
 
     # MLflow
     mlflow: MlflowConfig = MlflowConfig()

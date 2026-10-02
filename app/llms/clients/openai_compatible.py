@@ -52,6 +52,9 @@ class OpenAICompatibleModel(BaseLLMModel):
         :param messages: The list of messages to pass to the LLM.
         :return: The model's response.
         """
+        # `timeout` is an HTTP-level kwarg, not a model parameter — don't send it in the payload
+        timeout = kwargs.pop("timeout", self._timeout)
+
         # build messages
         payload = {
             "messages": [{"role": m.role, "content": m.content} for m in messages],
@@ -59,7 +62,7 @@ class OpenAICompatibleModel(BaseLLMModel):
             **kwargs,
         }
 
-        with httpx.Client(timeout=self._timeout) as client:
+        with httpx.Client(timeout=timeout) as client:
             if self._completion_url:
                 completion_url = self._completion_url
             elif self._base_url and self._chat_completions_path:
