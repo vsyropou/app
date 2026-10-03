@@ -32,9 +32,9 @@ class MlflowConfig(BaseSettings):
 class ModelConfig(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore")
 
-    name: str = "model"
-    # MLflow model URI (e.g. models:/name@alias, models:/name/version) or local path
-    uri: str | None = None
+    model: str | None = "qwen2.5:0.5b"
+    base_url: str | None = "http://ollama:11434/v1"
+    api_key: str | None = "test_key"
 
 
 class AppConfig(BaseSettings):
@@ -64,7 +64,6 @@ class AppConfig(BaseSettings):
     api_token: str | None = None
 
     # Kafka config
-    # Topics follow conventions in https://hackthebox.atlassian.net/wiki/spaces/ACH/pages/436535297/Kafka+Topics+Naming+Conventions
     topic_requests: str = "domain.subdomain.app.requests"
     topic_responses: str = "domain.subdomain.app.responses"
 

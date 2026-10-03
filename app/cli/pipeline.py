@@ -31,9 +31,14 @@ def run(
     Runs a pipeline.
     """
     try:
-        source, pipeline, destination, adapter = create_pipeline_from_config(spec)
+        source, pipeline, destination, adapter, sampler = create_pipeline_from_config(spec)
         runner = PipelineRunner(
-            source=source, pipeline=pipeline, destination=destination, batch_size=batch_size, adapter=adapter
+            source=source,
+            pipeline=pipeline,
+            destination=destination,
+            batch_size=batch_size,
+            adapter=adapter,
+            sampler=sampler,
         )
         runner.run()
     except ValueError as e:
