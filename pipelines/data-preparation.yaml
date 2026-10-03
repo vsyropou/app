@@ -1,0 +1,57 @@
+name: data-preparation
+
+source:
+  type: csv
+  params:
+    file_path: ./data/data.csv
+
+adapter:
+  type: field
+  params:
+    field: statement
+    default_value: ""
+
+transformers:
+  # - type: drop null statements
+  - type: lowercase
+  - type: remove_stopwords
+  - type: remove_unicode
+  - type: text_normalization
+  - type: filter-metadata
+    params:
+      metadata:
+        - field: Label
+          default_value: "Undefined"
+        - field: subjects
+          default_value: "Undefined"
+        - field: speaker_name
+          default_value: "Undefined"
+        - field: speaker_job
+          default_value: "Undefined"
+        - field: speaker_state
+          default_value: "Undefined"
+        - field: speaker_affiliation
+          default_value: "Undefined"
+        - field: statement_context
+          default_value: "Undefined"
+        - field: split
+          default_value: "Undefined"
+
+
+sampler:
+  type: stratified
+  params:
+    label_field: Label
+    splits:
+      train: 0.8
+      validation: 0.1
+      test: 0.1
+    shuffle: true
+    seed: 42
+
+
+destination:
+  type: file
+  params:
+    filename: ./data/prepared.jsonl
+    as_json: true
