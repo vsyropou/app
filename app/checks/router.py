@@ -5,6 +5,10 @@ from app.api.middlewares.events import LazyProducer
 from app.checks import checks
 from app.checks.checks import AggregateResponse, HealthResponse
 
+# ponytail: hardcoded serving-model config; move to AppConfig if this stops being a demo app
+OLLAMA_BASE_URL = "http://localhost:11434/v1"
+OLLAMA_MODEL = "qwen2.5:0.5b"
+
 
 def build_router(producer: LazyProducer) -> APIRouter:
     """
@@ -21,7 +25,10 @@ def build_router(producer: LazyProducer) -> APIRouter:
 
     @router.get("/readyz", response_model=AggregateResponse)
     async def readiness_check(response: Response) -> AggregateResponse:
-        result = checks.aggregate(await checks.kafka_ready(producer))
+        result = checks.aggregate(
+            await checks.kafka_ready(producer),
+            await checks.ollama_ready(OLLAMA_BASE_URL, OLLAMA_MODEL),
+        )
         response.status_code = 200 if result.ok else 503
         return result
 
