@@ -115,6 +115,11 @@ class TextNormalizationTransformer(Transformer):
         normalized_text = re.sub(r"\!{2,}", "!", normalized_text)
         normalized_text = re.sub(r"\?{2,}", "?", normalized_text)
 
+        # Unify curly quotes/dashes, ellipsis
+        normalized_text = normalized_text.translate(
+            str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"', "–": "-", "—": "-", "…": "..."})
+        )
+
         # Trim whitespace
         normalized_text = normalized_text.strip()
 
@@ -153,6 +158,105 @@ class TemplateSourceTransformer(Transformer):
         """
         template_obj = Template(self.template)
         return [Document(source=template_obj.render(document), metadata=document.metadata.copy())]
+
+
+class SplitMetadataTransformer(Transformer):
+    """
+    Transformer that splits a string metadata field by a delimiter into an ordered list.
+    """
+
+    name: ClassVar[str] = "split_metadata"
+    description: ClassVar[str] = "Splits a string metadata field by a delimiter into an ordered list"
+
+    field: str = Field(description="The metadata field to split.")
+    delimiter: str = Field(default="$", description="The delimiter to split on.")
+
+    def transform(self, document: Document) -> list[Document]:
+        """
+        Split the configured metadata field into an ordered list.
+        """
+        metadata = document.metadata.copy()
+        value = metadata.get(self.field)
+        if isinstance(value, str):
+            metadata[self.field] = sorted(s.strip() for s in value.split(self.delimiter) if s.strip())
+        return [Document(source=document.source, metadata=metadata)]
+
+
+class DropNullsTransformer(Transformer):
+    """
+    Transformer that drops records with null/empty source or null/empty listed metadata fields.
+    """
+
+    name: ClassVar[str] = "drop_nulls"
+    description: ClassVar[str] = "Drops records with empty source or missing/empty listed metadata fields"
+
+    fields: list[str] = Field(
+        default_factory=list,
+        description="Metadata fields that must be present and non-empty for the record to survive.",
+    )
+
+    def transform(self, document: Document) -> list[Document]:
+        """
+        Emit [] (drop) when source is empty or any listed field is missing/empty on the metadata.
+        """
+        if not document.source or not document.source.strip():
+            return []
+        for field in self.fields:
+            value = document.metadata.get(field)
+            if value is None:
+                return []
+            if isinstance(value, str) and not value.strip():
+                return []
+        return [document]
+
+
+class DeduplicateTransformer(Transformer):
+    """
+    Transformer that drops records whose (source, speaker) pair has already been seen.
+    Prevents duplicate-statement leakage across splits.
+    """
+
+    name: ClassVar[str] = "deduplicate"
+    description: ClassVar[str] = "Drops duplicate (source, speaker) pairs to prevent split leakage."
+
+    speaker_field: str = Field(default="speaker_name", description="Metadata field identifying the speaker.")
+
+    def __init__(self, **data) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(**data)
+        self._seen: set[tuple[str, str]] = set()
+
+    def transform(self, document: Document) -> list[Document]:
+        key = (document.source, str(document.metadata.get(self.speaker_field, "")))
+        if key in self._seen:
+            return []
+        self._seen.add(key)
+        return [document]
+
+
+class BucketizeTransformer(Transformer):
+    """
+    Maps raw values of a metadata field into a small named set of buckets.
+    Values not present in the mapping fall into ``other``; empty/missing falls into ``null_bucket``.
+    """
+
+    name: ClassVar[str] = "bucketize"
+    description: ClassVar[str] = "Maps raw categorical values into a small set of named buckets."
+
+    field: str = Field(description="The metadata field to bucketize.")
+    mapping: dict[str, str] = Field(
+        description="raw value (case-insensitive) → bucket name. Anything not mapping lands in ``other``."
+    )
+    other: str = Field(default="other", description="Bucket for values not present in mapping.")
+    null_bucket: str = Field(default="none", description="Bucket for missing/empty values.")
+
+    def transform(self, document: Document) -> list[Document]:
+        metadata = document.metadata.copy()
+        value = metadata.get(self.field)
+        if not isinstance(value, str) or not value.strip():
+            metadata[self.field] = self.null_bucket
+        else:
+            metadata[self.field] = self.mapping.get(value.strip().lower(), self.other)
+        return [Document(source=document.source, metadata=metadata)]
 
 
 class FilterMetadataTransformer(Transformer):

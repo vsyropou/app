@@ -11,16 +11,20 @@ adapter:
 
 transformers:
   # Clean the content by removing excessive whitespace
-  - type: lowercase
-  - type: remove_stopwords
   - type: remove_unicode
   - type: text_normalization
+  - type: split_metadata
+    params:
+      field: subjects
+      delimiter: "$"
   - type: filter-metadata
     params:
       metadata:
-        - field: speaker_name
+        - field: Label
           default_value: "Undefined"
         - field: subjects
+          default_value: "Undefined"
+        - field: speaker_name
           default_value: "Undefined"
         - field: speaker_job
           default_value: "Undefined"
@@ -30,6 +34,14 @@ transformers:
           default_value: "Undefined"
         - field: statement_context
           default_value: "Undefined"
+  - type: bucketize
+    params:
+      field: speaker_affiliation
+      mapping:
+        republican: republican
+        democrat: democrat
+      other: other
+      null_bucket: Undefined
   - type: llm
     params:
       model:
@@ -92,7 +104,7 @@ transformers:
     params:
       metadata:
         - field: is_true
-          default_value: "Undefined"
+          default_value: "Undefined" # TODO: this can cause trouble need to fix
         - field: confidence
           default_value: "Undefined"
         - field: hint

@@ -12,11 +12,15 @@ adapter:
     default_value: ""
 
 transformers:
-  # - type: drop null statements
-  - type: lowercase
-  - type: remove_stopwords
+  - type: drop_nulls
+    params:
+      fields: [Label]
   - type: remove_unicode
   - type: text_normalization
+  - type: split_metadata
+    params:
+      field: subjects
+      delimiter: "$"
   - type: filter-metadata
     params:
       metadata:
@@ -36,12 +40,23 @@ transformers:
           default_value: "Undefined"
         - field: split
           default_value: "Undefined"
+  - type: bucketize
+    params:
+      field: speaker_affiliation
+      mapping:
+        republican: republican
+        democrat: democrat
+      other: other
+      null_bucket: Undefined
+  - type: deduplicate
 
 
 sampler:
   type: stratified
   params:
     label_field: Label
+    # stratify_fields:
+    #    - subjects
     splits:
       train: 0.8
       validation: 0.1
