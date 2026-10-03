@@ -16,6 +16,7 @@ from app.pipeline.adapters import Adapter, FieldExtractorDocumentAdapter, NoopAd
 from app.pipeline.base import Pipeline
 from app.pipeline.destinations.base import Destination
 from app.pipeline.destinations.io import FileDestination
+from app.pipeline.samplers import Sampler, StratifiedSampler
 from app.pipeline.sources.base import Source
 from app.pipeline.sources.csv import CSVSource
 from app.pipeline.sources.filesystem import FilesystemSource
@@ -59,6 +60,13 @@ class AdapterConfig(BasePipelineConfig):
     params: dict[str, Any] = Field(default_factory=dict, description="Parameters to initialize the adapter.")
 
 
+class SamplerConfig(BasePipelineConfig):
+    """Configuration for a sampler between source and adapter."""
+
+    type: str = Field(..., description="The name of the sampler.")
+    params: dict[str, Any] = Field(default_factory=dict, description="Parameters to initialize the sampler.")
+
+
 class PipelineConfig(BasePipelineConfig):
     """Configuration for a complete pipeline."""
 
@@ -75,6 +83,9 @@ class PipelineConfig(BasePipelineConfig):
     adapter: AdapterConfig | None = Field(
         None, description="Optional adapter for converting source items to documents."
     )
+    sampler: SamplerConfig | None = Field(
+        None, description="Optional sampler between source and adapter for stratified splits."
+    )
 
 
 # List of known sources
@@ -89,6 +100,9 @@ DESTINATION_REGISTRY: dict[str, type[Destination[Any]]] = {FileDestination.name:
 
 # Registry of adapter implementations
 ADAPTER_REGISTRY: dict[str, type[Adapter]] = {adapter.name: adapter for adapter in [FieldExtractorDocumentAdapter]}
+
+# Registry of samplers; sits between source and adapter.
+SAMPLER_REGISTRY: dict[str, type[Sampler]] = {s.name: s for s in [StratifiedSampler]}
 
 
 def get_transformer_registry() -> dict[str, type[Transformer]]:
@@ -148,16 +162,16 @@ def load_pipeline_config(config_path: str | Path) -> PipelineConfig:
 
 
 def create_component_from_config(
-    config: SourceConfig | DestinationConfig | TransformerConfig | AdapterConfig,
-) -> tuple[str | None, Source | Destination[Any] | Transformer | Adapter]:
+    config: SourceConfig | DestinationConfig | TransformerConfig | AdapterConfig | SamplerConfig,
+) -> tuple[str | None, Source | Destination[Any] | Transformer | Adapter | Sampler]:
     """
-    Create a pipeline component (source, destination, transformer, or adapter) from its configuration.
+    Create a pipeline component (source, destination, transformer, adapter, or sampler) from its configuration.
 
     :param config: The component configuration.
     :return: A tuple of (name, component_instance). Name may be None for components that don't have names.
     :raises ValueError: If component_type is unknown or the specified type doesn't exist in the registry.
     """
-    registry: Mapping[str, type[Source | Destination[Any] | Transformer | Adapter]]
+    registry: Mapping[str, type[Source | Destination[Any] | Transformer | Adapter | Sampler]]
     if isinstance(config, SourceConfig):
         registry = SOURCE_REGISTRY
     elif isinstance(config, TransformerConfig):
@@ -166,6 +180,8 @@ def create_component_from_config(
         registry = DESTINATION_REGISTRY
     elif isinstance(config, AdapterConfig):
         registry = ADAPTER_REGISTRY
+    elif isinstance(config, SamplerConfig):
+        registry = SAMPLER_REGISTRY
     else:
         raise ValueError("Unexpected configuration type")
 
@@ -195,14 +211,28 @@ def create_adapter_from_config(config: AdapterConfig | None) -> Adapter:
     return adapter
 
 
+def create_sampler_from_config(config: SamplerConfig | None) -> Sampler | None:
+    """
+    Create a sampler instance from its configuration.
+
+    :param config: The sampler configuration, or None to skip sampling.
+    :return: The sampler instance, or None.
+    """
+    if config is None:
+        return None
+
+    _, sampler = cast(tuple[None, Sampler], create_component_from_config(config))
+    return sampler
+
+
 def create_pipeline_from_config(
     config: PipelineConfig | str | Path,
-) -> tuple[Source | None, Pipeline, Destination[Any], Adapter]:
+) -> tuple[Source | None, Pipeline, Destination[Any], Adapter, Sampler | None]:
     """
     Create a pipeline from a configuration.
 
     :param config: Either a PipelineConfig object or a path to a YAML configuration file.
-    :return: A tuple of (source, pipeline, destination, adapter).
+    :return: A tuple of (source, pipeline, destination, adapter, sampler).
     """
     if isinstance(config, str | Path):
         config = load_pipeline_config(config)
@@ -229,4 +259,7 @@ def create_pipeline_from_config(
     # create adapter
     adapter = create_adapter_from_config(config.adapter)
 
-    return source, Pipeline(transformers), destination, adapter
+    # create sampler
+    sampler = create_sampler_from_config(config.sampler)
+
+    return source, Pipeline(transformers), destination, adapter, sampler

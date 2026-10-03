@@ -125,7 +125,7 @@ class LLMTransformer(Transformer):
                 # Keep original result if JSON parsing fails
                 pass
 
-        metadata = document.metadata.model_copy()
+        metadata = document.metadata.copy()
 
         if self.target == "source":
             # Output replaces document source

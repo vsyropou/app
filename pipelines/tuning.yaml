@@ -1,0 +1,31 @@
+name: factcheck-tune
+
+source:
+  type: csv
+  params:
+    file_path: ./data/data.csv
+
+sampler:
+  type: stratified
+  params:
+    label_field: Label
+    stratify_fields: [speaker_affiliation, speaker_name]
+    splits: {train: 0.7, val: 0.15, test: 0.15}
+    balance: true
+    seed: 42
+
+adapter:
+  # Pull statement into Document.source; rest lands on metadata.
+  type: field
+  params:
+    field: statement
+    default_value: ""
+
+transformers:
+  - type: verdict-prompt
+
+destination:
+  type: file
+  params:
+    filename: ./data/tune.jsonl
+    as_json: true
