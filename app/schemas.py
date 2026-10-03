@@ -35,10 +35,15 @@ class MetadataField(CustomModel):
     default_value: Any
 
 
-class Metadata(CustomModel):
+class Document(CustomModel):
+    source: str = Field(description="The document to index.")
+    metadata: dict = Field(default=dict, description="Additional metadata to attach to the indexed data.")
+
+
+class Features(CustomModel):
     """Typed metadata carried through the pipeline; extra fields are preserved."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
 
     subject: str | None = Field(default=None, description="The subject of the statement.")
     affiliation: str | None = Field(default=None, description="The affiliation of the speaker.")
@@ -49,41 +54,32 @@ class Metadata(CustomModel):
     speaker_affiliation: str | None = Field(default=None, description="The affiliation of the speaker.")
     statement_context: str | None = Field(default=None, description="The context of the statement.")
 
+
+class ModelRequest(CustomModel):
+    statement: str = Field(description="The statement to be classified.")
+    features: Features = Field(description="The data point (features).")
+    label: int | None = Field(
+        None,
+        description="Optional list of labels corresponding to the documents. If provided, evaluation metrics will be returned.",
+    )
+    meta: dict | None = Field(None, description="Request metadata")
+
+
+class Score(CustomModel):
     # Verdict fields written by the `llm` transformer.
     is_true: bool | None = Field(default=None, description="Whether the statement is factually true.")
     confidence: float | None = Field(default=None, description="Confidence in the verdict, from 0.0 to 1.0.")
     hint: str | None = Field(default=None, description="One-sentence explanation of the verdict.")
 
 
-class Document(CustomModel):
-    source: str = Field(description="The document to index.")
-    metadata: Metadata = Field(
-        default_factory=Metadata, description="Additional metadata to attach to the indexed data."
-    )
-
-
-class EvaluationMetrics(CustomModel):
+class Metrics(CustomModel):
     accuracy: float = Field(description="The overall accuracy of the evaluation.")
     precision: float = Field(description="The precision of the evaluation.")
     recall: float = Field(description="The recall of the evaluation.")
     f1_score: float = Field(description="The F1 score of the evaluation.")
 
 
-class ModelRequest(CustomModel):
-    documents: list[Document] = Field(description="A list of documents to be evaluated.")
-    labels: list[int] | None = Field(
-        default=None,
-        description="Optional list of labels corresponding to the documents. If provided, evaluation metrics will be returned.",
-    )
-
-
 class ModelResponse(CustomModel):
-    verdict: str = Field(description="The evaluation verdict, e.g., 'true', 'false', or 'unknown'.")
-    confidence: float = Field(
-        description="Confidence level of the evaluation, ranging from 0.0 (not confident) to 1.0 (very confident)."
-    )
-    hint: str = Field(description="A brief justification for the verdict.")
-
-    metrics: EvaluationMetrics | None = Field(
-        default=None, description="Optional evaluation metrics if labels were provided."
-    )
+    scores: list[Score] = Field(description="The actual model responses")
+    metrics: Metrics | None = Field(None, description="Optional evaluation metrics if labels were provided.")
+    meta: dict | None = Field(None, description="Rsponse metadata")

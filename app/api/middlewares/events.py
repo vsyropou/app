@@ -3,7 +3,6 @@ import datetime
 import json
 import re
 import time
-import uuid
 from logging import getLogger
 from typing import Any
 
@@ -15,6 +14,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 from tenacity import AsyncRetrying, RetryError, stop_after_attempt, wait_random_exponential
+from uuid_extensions import uuid7str
 
 logger = getLogger(__name__)
 
@@ -157,7 +157,7 @@ class KafkaMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Use request ID to correlate request and response. Generate a random one if not found.
-        request_id = correlation_id.get() or str(uuid.uuid4())
+        request_id = correlation_id.get() or str(uuid7str())
         logger.info(f"Logging request {request_id}")
 
         # Capture request details
@@ -185,6 +185,7 @@ class KafkaMiddleware(BaseHTTPMiddleware):
 
         # Process the request through the application
         response: Response = await call_next(request)
+        response.headers["X-Request-Id"] = request_id
 
         # Calculate processing time
         process_time = time.perf_counter() - start_time

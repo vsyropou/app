@@ -34,10 +34,13 @@ transformers:
     params:
       model:
         provider: openai-compatible
-        model: qwen2.5:0.5b
-        base_url: http://localhost:11434/v1
+        model: | 
+          {{ model}}
+        base_url: |
+          {{ base_url }}
         dimensions: 1024
-        api_key: test-key
+        api_key: | 
+          {{ api_key }}
       target: metadata
       timeout: 300
       system_prompt: |

@@ -1,7 +1,9 @@
 from typing import Any, Literal
 
+from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field, model_validator
 
+from app.config import ModelConfig
 from app.schemas import CustomModel
 
 
@@ -15,6 +17,19 @@ class OpenAIConfig(CustomModel):
     dimensions: int | None = Field(None, description="The number of dimensions for the configured model.")
     api_key: str | EnvVar | None = Field(None, description="The API key to use on each request.")
     base_url: str | None = Field(None, description="URL to use for overriding OpenAI default URL.")
+
+    @model_validator(mode="after")
+    def render_templates(self) -> "OpenAICompatibleConfig":
+        context = ModelConfig().model_dump(exclude_none=True)
+        for field in ("model", "base_url", "api_key"):
+            value = getattr(self, field)
+            if isinstance(value, str) and "{{" in value:
+                try:
+                    rendered = Template(value).render(**context)
+                except TemplateError as e:
+                    raise ValueError(f"Invalid Jinja template in {field}: {e}")
+                setattr(self, field, rendered)
+        return self
 
 
 class OpenAICompatibleConfig(CustomModel):
@@ -37,6 +52,19 @@ class OpenAICompatibleConfig(CustomModel):
                 "Either base_url must be provided, or at least one of completion_url/embedding_url must be specified"
             )
 
+        return self
+
+    @model_validator(mode="after")
+    def render_templates(self) -> "OpenAICompatibleConfig":
+        context = ModelConfig().model_dump(exclude_none=True)
+        for field in ("model", "base_url", "api_key"):
+            value = getattr(self, field)
+            if isinstance(value, str) and "{{" in value:
+                try:
+                    rendered = Template(value).render(**context)
+                except TemplateError as e:
+                    raise ValueError(f"Invalid Jinja template in {field}: {e}")
+                setattr(self, field, rendered)
         return self
 
 

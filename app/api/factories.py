@@ -14,7 +14,7 @@ from app.api.middlewares.events import KafkaMiddleware, LazyProducer
 from app.api.middlewares.metrics import PrometheusMiddleware, metrics
 from app.checks import router as checks_router
 from app.config import AppConfig
-from app.models import router as models_router
+from app.models import router_tuned, router_zero
 from app.tracing import instrument_fastapi
 
 logger = getLogger(__name__)
@@ -39,8 +39,8 @@ def app_factory(config: AppConfig, producer: LazyProducer, tracer_provider: Trac
         description="App endpoints",
         version=__version__,
         contact={
-            "name": "Hack The Box",
-            "url": "https://hackthebox.com",
+            "name": "Vasilis Syropoulos",
+            "email": "vsyropou5@gmail.com",
         },
         debug=config.debug,
         lifespan=lifespan,
@@ -48,7 +48,13 @@ def app_factory(config: AppConfig, producer: LazyProducer, tracer_provider: Trac
 
     # Composable endpoints
     myapp.include_router(
-        models_router.router,
+        router_zero.router,
+        prefix="/api/v1",
+        dependencies=[Depends(require_bearer)],
+    )
+
+    myapp.include_router(
+        router_tuned.router,
         prefix="/api/v1",
         dependencies=[Depends(require_bearer)],
     )
@@ -95,7 +101,7 @@ def app_factory(config: AppConfig, producer: LazyProducer, tracer_provider: Trac
     myapp.add_middleware(PrometheusMiddleware, app_name=config.app_name)
 
     # Correlation ID Middleware must always be last
-    myapp.add_middleware(CorrelationIdMiddleware, header_name="x-htb-request-id", validator=None)
+    myapp.add_middleware(CorrelationIdMiddleware, header_name="x-request-id", validator=None)
 
     # Custom exception handlers
     @myapp.exception_handler(Exception)
